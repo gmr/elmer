@@ -17,14 +17,12 @@ update_tuple_value({Name, DataType, Value}) ->
 toggle_monitoring(VirtualHost, Queue) ->
   F = fun() ->
     io:format("Running query~n"),
-    [A] = mnesia:read(rabbit_durable_queue, {resource,VirtualHost,queue,Queue}, write),
+    [A] = mnesia:read(rabbit_queue, {resource,VirtualHost,queue,Queue}, write),
     io:format("Queue: ~s~n", [element(4, A#amqqueue.queue)]),
     Attributes = [update_tuple_value(Attrib) || Attrib <- A#amqqueue.attributes],
     New = A#amqqueue{attributes = Attributes},
+    mnesia:write(rabbit_queue, New, write),
     mnesia:write(rabbit_durable_queue, New, write)
   end,
   {_, Response} = mnesia:transaction(F),
-  %% I don't like this as it breaks consumer connections, need something better to get the data reloaded
-  rabbit_amqqueue:stop(),
-  rabbit_amqqueue:start(),
   Response.
