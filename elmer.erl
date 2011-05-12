@@ -1,7 +1,7 @@
--module(rqae).
--export([setup_monitoring/4,remove_monitoring/2,toggle_monitoring/2]).
+%% elmer erlang support functions
 
--export([get_x_monitor_value/1]).
+-module(elmer).
+-export([setup_monitoring/4,remove_monitoring/2,toggle_monitoring/2]).
 -include("queue.hrl").
 
 %% Removes all monitoring related attributes
@@ -55,7 +55,9 @@ toggle_monitoring(VirtualHost, Queue) ->
     error -> {error, "Queue not found."}
   end.
 
-% Support functions
+%% -----------------
+%% Support functions
+%% -----------------
 
 %% Writes a amqqueue record to mnesia in both ram and disk so the rabbitmq processes
 %% get the info needed to see the update live
@@ -78,6 +80,7 @@ get_x_monitor_value(Attributes) ->
     end,
   Value.
   
+%% Toggles the x-monitor attribute tuple's value
 toggle_x_monitor_value({<<"x-monitor">>, DataType, Value}) ->
   {<<"x-monitor">>, DataType, get_new_bool_value(Value)};
 
@@ -99,5 +102,3 @@ filter_monitoring_tuples(Record) ->
     <<"x-alert">> -> false;
     _ -> true
   end.
-
-
