@@ -1,24 +1,8 @@
 %% elmer erlang support functions
 
 -module(elmer).
--export([setup_monitoring/4,remove_monitoring/2,toggle_monitoring/2]).
+-export([setup_monitoring/4,remove_monitoring/2,toggle_monitoring/2,change_monitoring_thresholds/4]).
 -include("queue.hrl").
-
-%% Removes all monitoring related attributes
-%% Returns a tuple of result, Remaining attributes/Error message
-remove_monitoring(VirtualHost, Queue) ->
-  {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
-  case Response of
-    ok ->
-      case get_x_monitor_value(Record#amqqueue.attributes) of
-        error -> {error, "Monitoring not setup."};
-        _ ->
-          Attributes = lists:filter(fun filter_monitoring_tuples/1, Record#amqqueue.attributes),
-          New = Record#amqqueue{attributes = Attributes},
-          {write_record(New), Attributes}
-      end;
-    error -> {error, "Queue not found."}
-  end.
 
 %% Turns on monitoring for a queue
 %% Returns a tuple of result, Value/Error message
@@ -51,6 +35,38 @@ toggle_monitoring(VirtualHost, Queue) ->
           Attributes = [toggle_x_monitor_value(Attrib) || Attrib <- Record#amqqueue.attributes],
           New = Record#amqqueue{attributes = Attributes},
           {write_record(New), get_x_monitor_value(Attributes)}
+      end;
+    error -> {error, "Queue not found."}
+  end.
+
+%% Update monitoring thresholds
+%% Returns a tuple of result, Value/Error message
+change_monitoring_thresholds(VirtualHost, Queue, WarnQty, AlertQty) ->
+  {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
+  case Response of
+    ok ->
+      case get_x_monitor_value(Record#amqqueue.attributes) of
+        error -> {error, "Monitoring not setup."};
+        _ ->
+          Attributes = [update_warn_or_alert_value(Attrib, WarnQty, AlertQty) || Attrib <- Record#amqqueue.attributes],
+          New = Record#amqqueue{attributes = Attributes},
+          {write_record(New), Attributes}
+      end;
+    error -> {error, "Queue not found."}
+  end.
+
+%% Removes all monitoring related attributes
+%% Returns a tuple of result, Remaining attributes/Error message
+remove_monitoring(VirtualHost, Queue) ->
+  {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
+  case Response of
+    ok ->
+      case get_x_monitor_value(Record#amqqueue.attributes) of
+        error -> {error, "Monitoring not setup."};
+        _ ->
+          Attributes = lists:filter(fun filter_monitoring_tuples/1, Record#amqqueue.attributes),
+          New = Record#amqqueue{attributes = Attributes},
+          {write_record(New), Attributes}
       end;
     error -> {error, "Queue not found."}
   end.
@@ -101,4 +117,15 @@ filter_monitoring_tuples(Record) ->
     <<"x-warn">> -> false;
     <<"x-alert">> -> false;
     _ -> true
+  end.
+
+% Takes a tuple and updates the value for x-warn and x-alert
+update_warn_or_alert_value(Record, WarnQty, AlertQty) ->
+  case element(1, Record) of
+    <<"x-warn">> -> 
+      {<<"x-warn">>, element(2, Record), WarnQty};
+    <<"x-alert">> -> 
+      {<<"x-alert">>, element(2, Record), AlertQty};
+    _ ->
+      Record
   end.

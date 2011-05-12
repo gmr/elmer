@@ -47,9 +47,25 @@ _Returns_:
  - Result (ok, error)
  - Value (true,false,error message)
 
+### change_monitoring_thresholds/4
+
+Change the monitoring thresholds for the specified queue
+
+_Parameters_:
+
+ - Virtual host
+ - Queue name
+ - Queue depth quantity for a warning
+ - Queue depth quantity for an alert
+
+_Returns_:
+
+ - Result (ok, error)
+ - Attribute tuple list for the queue
+
 ## Example use in erl
 
-  erl -sname gmr -remsh rabbit@gmr-0x09
+  erl -sname elmer -remsh rabbit@gmr-0x09
   Erlang R14B02 (erts-5.8.3) [source] [64-bit] [smp:2:2] [rq:2] [async-threads:0] [hipe] [kernel-poll:false]
   Eshell V5.8.3  (abort with ^G)
   (rabbit@gmr-0x09)1> cd("/Users/gmr/Source/elmer/").
