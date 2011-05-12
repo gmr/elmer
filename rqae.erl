@@ -1,5 +1,5 @@
 -module(rqae).
--export([disable_monitoring/1]).
+-export([toggle_monitoring/1]).
 -include("queue.hrl").
   
 get_new_bool_value(<<"True">>) ->
@@ -13,16 +13,15 @@ update_tuple_value({<<"x-monitor">>, DataType, Value}) ->
   
 update_tuple_value({Name, DataType, Value}) ->
   {Name, DataType, Value}.
-  
-disable_monitoring(Queue) ->
+
+toggle_monitoring(Queue) ->
   F = fun() ->
     io:format("Running query~n"),
     [A] = mnesia:read(rabbit_durable_queue, {resource,<<"/">>,queue,Queue}, write),
     io:format("Queue: ~s~n", [element(4, A#amqqueue.queue)]),
     Attributes = [update_tuple_value(Attrib) || Attrib <- A#amqqueue.attributes],
     New = A#amqqueue{attributes = Attributes},
-    mnesia:write(New)
+    mnesia:write(rabbit_durable_queue, New, write)
   end,
-  mnesia:transaction(F).
-
-  
+  {_, Response} = mnesia:transaction(F),
+  Response.
