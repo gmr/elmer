@@ -1,8 +1,26 @@
 %% elmer erlang support functions
 
 -module(elmer).
--export([setup_monitoring/4,remove_monitoring/2,toggle_monitoring/2,change_monitoring_thresholds/4]).
+-export([get_monitoring_status/2, setup_monitoring/4, remove_monitoring/2, 
+         toggle_monitoring/2, change_monitoring_thresholds/4]).
 -include("queue.hrl").
+
+%% Get the status of a queue's monitorng setup
+%% Returns a tuple of setup (bool), enabled (bool), warning threshold, alert threshold
+get_monitoring_status(VirtualHost, Queue) ->
+  {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
+  case Response of
+    ok ->
+      Monitor = get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>),
+      case Monitor of
+        error -> {false, false, -1, -1};
+        _ -> {true , 
+              get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>),
+              get_tuple_value(Record#amqqueue.attributes, <<"x-warn">>),
+              get_tuple_value(Record#amqqueue.attributes, <<"x-alert">>)}
+      end;
+    error -> {error, "Queue not found."}
+  end.
 
 %% Turns on monitoring for a queue
 %% Returns a tuple of result, Value/Error message
@@ -10,7 +28,7 @@ setup_monitoring(VirtualHost, Queue, WarnQty, AlertQty) ->
   {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
   case Response of
     ok ->
-      case get_x_monitor_value(Record#amqqueue.attributes) of
+      case get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>) of
         true -> {error, "Monitoring already setup."};
         false -> {error, "Monitoring already setup."};
         error ->
@@ -29,12 +47,12 @@ toggle_monitoring(VirtualHost, Queue) ->
   {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
   case Response of
     ok ->
-      case get_x_monitor_value(Record#amqqueue.attributes) of
+      case get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>) of
         error -> {error, "Monitoring not setup."};
         _ ->
           Attributes = [toggle_x_monitor_value(Attrib) || Attrib <- Record#amqqueue.attributes],
           New = Record#amqqueue{attributes = Attributes},
-          {write_record(New), get_x_monitor_value(Attributes)}
+          {write_record(New), get_tuple_value(Attributes, <<"x-monitor">>)}
       end;
     error -> {error, "Queue not found."}
   end.
@@ -45,7 +63,7 @@ change_monitoring_thresholds(VirtualHost, Queue, WarnQty, AlertQty) ->
   {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
   case Response of
     ok ->
-      case get_x_monitor_value(Record#amqqueue.attributes) of
+      case get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>) of
         error -> {error, "Monitoring not setup."};
         _ ->
           Attributes = [update_warn_or_alert_value(Attrib, WarnQty, AlertQty) || Attrib <- Record#amqqueue.attributes],
@@ -61,7 +79,7 @@ remove_monitoring(VirtualHost, Queue) ->
   {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
   case Response of
     ok ->
-      case get_x_monitor_value(Record#amqqueue.attributes) of
+      case get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>) of
         error -> {error, "Monitoring not setup."};
         _ ->
           Attributes = lists:filter(fun filter_monitoring_tuples/1, Record#amqqueue.attributes),
@@ -85,17 +103,17 @@ write_record(Record) ->
   {_, Response} = mnesia:transaction(F),
   Response.
 
-%% x-monitor specific functions
-get_x_monitor_value(Attributes) ->
-  Record = lists:filter(fun(R) -> element(1, R) =:= <<"x-monitor">> end, Attributes),
+%% Get the value for a specified attribute tuple  
+get_tuple_value(Attributes, Field) ->
+  Record = lists:filter(fun(R) -> element(1, R) =:= Field end, Attributes),
   case Record of 
     [] ->
       Value = error;
-    [{<<"x-monitor">>, _, _}] ->
+    [{Field, _, _}] ->
       [{_, _, Value}] = Record
     end,
   Value.
-  
+
 %% Toggles the x-monitor attribute tuple's value
 toggle_x_monitor_value({<<"x-monitor">>, DataType, Value}) ->
   {<<"x-monitor">>, DataType, get_new_bool_value(Value)};

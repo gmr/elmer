@@ -3,6 +3,27 @@ Work in progress toolset for granular monitoring of RabbitMQ Queues using Queue 
 
 ## Elmer Erlang Functions
 
+### get_monitoring_status/2
+
+Gets the monitoring status for the specified queue
+
+_Parameters_:
+
+ - Virtual host
+ - Queue name
+
+_Returns_:
+
+ - Setup (bool)
+ - Enabled (bool)
+ - Warning threshold (short)
+ - Alert theshold (short)
+ 
+ or
+
+ - error
+ - Error message
+
 ### setup_monitoring/4
 
 Add the monitoring records to the specified queue.
@@ -17,7 +38,7 @@ _Parameters_:
 _Returns_:
 
  - Result (ok, error)
- - Attribute tuple list for the queue
+ - Attribute tuple list for the queue or error message
 
 ### remove_monitoring/2
 
@@ -31,7 +52,7 @@ _Parameters_:
 _Returns_:
 
  - Result (ok, error)
- - Remaining attribute tuple list for the queue
+ - Remaining attribute tuple list for the queue or error message
 
 ### toggle_monitoring/2
 
@@ -61,7 +82,7 @@ _Parameters_:
 _Returns_:
 
  - Result (ok, error)
- - Attribute tuple list for the queue
+ - Attribute tuple list for the queue or error message
 
 ## Example use in erl
 
