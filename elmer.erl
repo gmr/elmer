@@ -1,7 +1,7 @@
 %% elmer erlang support functions
 
 -module(elmer).
--export([cli/1, get_monitoring_status/2, setup_monitoring/4, remove_monitoring/2,
+-export([get_monitoring_status/2, setup_monitoring/4, remove_monitoring/2,
          toggle_monitoring/2, change_monitoring_thresholds/4]).
 -include("queue.hrl").
 
