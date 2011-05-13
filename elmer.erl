@@ -1,7 +1,7 @@
 %% elmer erlang support functions
 
 -module(elmer).
--export([get_monitoring_status/2, setup_monitoring/4, remove_monitoring/2, 
+-export([cli/1, get_monitoring_status/2, setup_monitoring/4, remove_monitoring/2,
          toggle_monitoring/2, change_monitoring_thresholds/4]).
 -include("queue.hrl").
 
@@ -14,7 +14,7 @@ get_monitoring_status(VirtualHost, Queue) ->
       Monitor = get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>),
       case Monitor of
         error -> {false, false, -1, -1};
-        _ -> {true , 
+        _ -> {true,
               get_tuple_value(Record#amqqueue.attributes, <<"x-monitor">>),
               get_tuple_value(Record#amqqueue.attributes, <<"x-warn">>),
               get_tuple_value(Record#amqqueue.attributes, <<"x-alert">>)}
@@ -41,7 +41,7 @@ setup_monitoring(VirtualHost, Queue, WarnQty, AlertQty) ->
     error -> {error, "Queue not found."}
   end.
 
-%% Toggles the boolean value of the x-monitor record. 
+%% Toggles the boolean value of the x-monitor record.
 %% Returns a tuple of result, Value/Error message
 toggle_monitoring(VirtualHost, Queue) ->
   {Response, Record} = rabbit_amqqueue:lookup({resource, VirtualHost, queue, Queue}),
@@ -103,10 +103,10 @@ write_record(Record) ->
   {_, Response} = mnesia:transaction(F),
   Response.
 
-%% Get the value for a specified attribute tuple  
+%% Get the value for a specified attribute tuple
 get_tuple_value(Attributes, Field) ->
   Record = lists:filter(fun(R) -> element(1, R) =:= Field end, Attributes),
-  case Record of 
+  case Record of
     [] ->
       Value = error;
     [{Field, _, _}] ->
@@ -120,11 +120,11 @@ toggle_x_monitor_value({<<"x-monitor">>, DataType, Value}) ->
 
 toggle_x_monitor_value({Name, DataType, Value}) ->
   {Name, DataType, Value}.
-  
+
 %% flip the boolean value
 get_new_bool_value(true) ->
   false;
-  
+
 get_new_bool_value(_) ->
   true.
 
@@ -140,9 +140,9 @@ filter_monitoring_tuples(Record) ->
 % Takes a tuple and updates the value for x-warn and x-alert
 update_warn_or_alert_value(Record, WarnQty, AlertQty) ->
   case element(1, Record) of
-    <<"x-warn">> -> 
+    <<"x-warn">> ->
       {<<"x-warn">>, element(2, Record), WarnQty};
-    <<"x-alert">> -> 
+    <<"x-alert">> ->
       {<<"x-alert">>, element(2, Record), AlertQty};
     _ ->
       Record
