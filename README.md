@@ -18,7 +18,7 @@ _Returns_:
  - Enabled (bool)
  - Warning threshold (short)
  - Alert theshold (short)
- 
+
  or
 
  - error
@@ -86,19 +86,19 @@ _Returns_:
 
 ## Example use in erl
 
-  erl -sname elmer -remsh rabbit@gmr-0x09
-  Erlang R14B02 (erts-5.8.3) [source] [64-bit] [smp:2:2] [rq:2] [async-threads:0] [hipe] [kernel-poll:false]
-  Eshell V5.8.3  (abort with ^G)
-  (rabbit@gmr-0x09)1> cd("/Users/gmr/Source/elmer/").
-  /Users/gmr/Dropbox/Source/elmer
-  ok
-  (rabbit@gmr-0x09)2> elmer:setup_monitoring(<<"/">>, <<"test">>, 1000, 2500).
-  {ok,[{<<"x-monitor">>,bit,true},
-       {<<"x-warn">>,short,1000},
-       {<<"x-alert">>,short,2500}]}
-  (rabbit@gmr-0x09)3> elmer:toggle_monitoring(<<"/">>, <<"test">>).
-  {ok,false}
-  (rabbit@gmr-0x09)4> elmer:toggle_monitoring(<<"/">>, <<"test">>).
-  {ok,true}
-  (rabbit@gmr-0x09)5> elmer:remove_monitoring(<<"/">>, <<"test">>).
-  {ok,[]}
+    erl -sname elmer -remsh rabbit@gmr-0x09
+    Erlang R14B02 (erts-5.8.3) [source] [64-bit] [smp:2:2] [rq:2] [async-threads:0] [hipe] [kernel-poll:false]
+    Eshell V5.8.3  (abort with ^G)
+    (rabbit@gmr-0x09)1> cd("/Users/gmr/Source/elmer/").
+    /Users/gmr/Dropbox/Source/elmer
+    ok
+    (rabbit@gmr-0x09)2> elmer:setup_monitoring(<<"/">>, <<"test">>, 1000, 2500).
+    {ok,[{<<"x-monitor">>,bit,true},
+         {<<"x-warn">>,short,1000},
+         {<<"x-alert">>,short,2500}]}
+    (rabbit@gmr-0x09)3> elmer:toggle_monitoring(<<"/">>, <<"test">>).
+    {ok,false}
+    (rabbit@gmr-0x09)4> elmer:toggle_monitoring(<<"/">>, <<"test">>).
+    {ok,true}
+    (rabbit@gmr-0x09)5> elmer:remove_monitoring(<<"/">>, <<"test">>).
+    {ok,[]}
